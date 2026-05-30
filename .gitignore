@@ -1,0 +1,26 @@
+# Python bytecode & cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Environments
+.env
+.env.local
+
+# Virtual Environments
+venv/
+.venv/
+env/
+
+# OS specific files
+.DS_Store
+Thumbs.db
+
+# Large voice models / audio samples
+voices/*.WAV
+voices/*.wav
+*.wav
+*.WAV
+
