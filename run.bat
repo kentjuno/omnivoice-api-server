@@ -36,7 +36,7 @@ echo.
 echo  [INFO] Starting server... (Ctrl+C to stop)
 echo.
 cd /d "%~dp0app"
-uvicorn main:app --host 127.0.0.1 --port 8088 --log-level info
+"%~dp0venv\Scripts\python.exe" -m uvicorn main:app --host 127.0.0.1 --port 8088 --log-level info
 
 echo.
 echo  [INFO] Server stopped.

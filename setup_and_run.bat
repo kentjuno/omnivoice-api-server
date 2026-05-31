@@ -42,16 +42,69 @@ echo.
 echo ======================================================================
 echo CHON PHIEN BAN PYTORCH CAI DAT (SELECT PYTORCH VERSION):
 echo ======================================================================
-echo [1] Nvidia GPU CUDA 12.4 (Khuyen dung - Chay rat nhanh)
-echo [2] Nvidia GPU CUDA 12.1
-echo [3] Chi dung CPU (Khong can card rời - Chay cham hon)
+echo [0] Tu dong phat hien theo may (khuyen dung)
+echo [1] Nvidia GPU CUDA 12.6 (Khuyen dung - Chay rat nhanh)
+echo [2] Nvidia GPU CUDA 12.4
+echo [3] Nvidia GPU CUDA 12.1
+echo [4] Chi dung CPU (Khong can card roi - Chay cham hon)
 echo ======================================================================
-set /p choice="Nhap lua chon cua ban (1-3): "
+set /p choice="Nhap lua chon cua ban (0-4): "
 
-if "%choice%"=="1" (
+if "%choice%"=="" set "choice=0"
+
+if "%choice%"=="0" (
+    set "cuda_ver="
+    set "cuda_target=cpu"
+
+    where nvidia-smi >nul 2>&1
+    if !errorlevel! equ 0 (
+        for /f "tokens=2 delims=:" %%A in ('nvidia-smi ^| findstr /i "CUDA Version"') do (
+            set "cuda_ver=%%A"
+        )
+
+        if defined cuda_ver (
+            for /f "tokens=1-2 delims=." %%A in ("!cuda_ver!") do (
+                set "cuda_major=%%A"
+                set "cuda_minor=%%B"
+            )
+
+            if not defined cuda_minor set "cuda_minor=0"
+            if !cuda_major! GEQ 13 (
+                set "cuda_target=cu126"
+            ) else if !cuda_major! GEQ 12 (
+                if !cuda_minor! GEQ 6 (
+                    set "cuda_target=cu126"
+                ) else if !cuda_minor! GEQ 4 (
+                    set "cuda_target=cu124"
+                ) else (
+                    set "cuda_target=cu121"
+                )
+            ) else (
+                set "cuda_target=cu121"
+            )
+        )
+    )
+
+    if "!cuda_target!"=="cu126" (
+        echo [INFO] Auto-detected CUDA support: 12.6 or higher - installing PyTorch CUDA 12.6...
+        pip install torch torchaudio --extra-index-url https://download.pytorch.org/whl/cu126
+    ) else if "!cuda_target!"=="cu124" (
+        echo [INFO] Auto-detected CUDA support: 12.4 - installing PyTorch CUDA 12.4...
+        pip install torch torchaudio --extra-index-url https://download.pytorch.org/whl/cu124
+    ) else if "!cuda_target!"=="cu121" (
+        echo [INFO] Auto-detected CUDA support: 12.1 - installing PyTorch CUDA 12.1...
+        pip install torch torchaudio --extra-index-url https://download.pytorch.org/whl/cu121
+    ) else (
+        echo [INFO] No NVIDIA GPU detected - installing PyTorch CPU-only version...
+        pip install torch torchaudio
+    )
+) else if "%choice%"=="1" (
+    echo [INFO] Installing PyTorch with CUDA 12.6 support...
+    pip install torch torchaudio --extra-index-url https://download.pytorch.org/whl/cu126
+) else if "%choice%"=="2" (
     echo [INFO] Installing PyTorch with CUDA 12.4 support...
     pip install torch torchaudio --extra-index-url https://download.pytorch.org/whl/cu124
-) else if "%choice%"=="2" (
+) else if "%choice%"=="3" (
     echo [INFO] Installing PyTorch with CUDA 12.1 support...
     pip install torch torchaudio --extra-index-url https://download.pytorch.org/whl/cu121
 ) else (
@@ -98,7 +151,7 @@ echo.
 set /p run="Ban co muon khoi dong server luon khong? (y/n): "
 if /i "%run%"=="y" (
     echo [INFO] Starting FastAPI server on http://127.0.0.1:8000 ...
-    python app/main.py
+    "%~dp0venv\Scripts\python.exe" "%~dp0app\main.py"
 ) else (
     echo.
     echo De chay server sau nay, activate venv va chay:
@@ -107,3 +160,4 @@ if /i "%run%"=="y" (
 )
 
 pause
+

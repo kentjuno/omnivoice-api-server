@@ -29,6 +29,10 @@ async def lifespan(app: FastAPI):
     import torch
     from omnivoice import OmniVoice
     
+    logger.info("Python executable: %s", sys.executable)
+    logger.info("Torch version: %s | torch.cuda.is_available(): %s | torch.version.cuda: %s",
+                torch.__version__, torch.cuda.is_available(), torch.version.cuda)
+
     device = os.getenv("DEVICE", "cuda" if torch.cuda.is_available() else "cpu")
     dtype_str = os.getenv("DTYPE", "float16" if device == "cuda" else "float32")
     
