@@ -55,6 +55,9 @@ python app/main.py
 
 ## API Reference
 
+By default, `run.bat` starts the server for local-only access at `127.0.0.1:8088`.
+If MovieRecapTool runs on another machine in the same LAN, start OmniVoice with `OMNIVOICE_HOST=0.0.0.0` and set the app's OmniVoice URL to `http://<server-lan-ip>:8088/v1/tts`.
+
 ### 1. Health Check
 *   **Method**: `GET`
 *   **URL**: `http://127.0.0.1:8088/health`

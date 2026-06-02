@@ -23,6 +23,39 @@ logger = logging.getLogger("omnivoice-api-server")
 # Global reference to model
 model = None
 
+VALID_ENGLISH_INSTRUCT_ITEMS = {
+    "american accent",
+    "australian accent",
+    "british accent",
+    "canadian accent",
+    "child",
+    "chinese accent",
+    "elderly",
+    "female",
+    "high pitch",
+    "indian accent",
+    "japanese accent",
+    "korean accent",
+    "low pitch",
+    "male",
+    "middle-aged",
+    "moderate pitch",
+    "portuguese accent",
+    "russian accent",
+    "teenager",
+    "very high pitch",
+    "very low pitch",
+    "whisper",
+    "young adult",
+}
+
+
+def _is_valid_english_instruct(value: str) -> bool:
+    if not value:
+        return False
+    items = [part.strip().lower() for part in value.split(",")]
+    return all(item in VALID_ENGLISH_INSTRUCT_ITEMS for item in items if item)
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global model
@@ -136,12 +169,22 @@ async def generate_tts(request: TTSRequest):
     if not instruct and request.voice_id and not ref_audio_path:
         # Fallback mappings for standard MovieRecapTool voices if files do not exist
         voice_id_lower = request.voice_id.lower()
-        if "female" in voice_id_lower or "default" in voice_id_lower:
+        if voice_id_lower in {"vi", "vi_voice", "vi_female", "vi_female_1", "vi-female-1", "female_vi", "female-vi"}:
+            instruct = "female, young adult, moderate pitch"
+        elif voice_id_lower in {"vi_male", "vi_male_1", "vi-male-1", "male_vi", "male-vi"}:
+            instruct = "male, young adult, moderate pitch"
+        elif "female" in voice_id_lower or "default" in voice_id_lower:
             instruct = "female, young adult, moderate pitch"
         elif "male" in voice_id_lower:
             instruct = "male, young adult, moderate pitch"
-        else:
+        elif _is_valid_english_instruct(request.voice_id):
             instruct = request.voice_id
+        else:
+            logger.warning(
+                "voice_id '%s' did not match a local reference file and is not a valid OmniVoice instruct. Falling back to default voice design.",
+                request.voice_id,
+            )
+            instruct = "female, young adult, moderate pitch"
         logger.info("Treating voice_id '%s' as Voice Design instruction: %s", request.voice_id, instruct)
 
     # 3. Handle emotions
@@ -238,7 +281,7 @@ def list_available_voices():
 
 if __name__ == "__main__":
     import uvicorn
-    host = os.getenv("HOST", "127.0.0.1")
-    port = int(os.getenv("PORT", "8000"))
+    host = os.getenv("OMNIVOICE_HOST") or os.getenv("HOST", "127.0.0.1")
+    port = int(os.getenv("OMNIVOICE_PORT") or os.getenv("PORT", "8088"))
     logger.info("Starting Uvicorn server on %s:%d...", host, port)
     uvicorn.run("main:app", host=host, port=port, reload=False)

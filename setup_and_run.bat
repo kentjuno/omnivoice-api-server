@@ -150,7 +150,9 @@ echo.
 
 set /p run="Ban co muon khoi dong server luon khong? (y/n): "
 if /i "%run%"=="y" (
-    echo [INFO] Starting FastAPI server on http://127.0.0.1:8000 ...
+    if "%OMNIVOICE_HOST%"=="" set "OMNIVOICE_HOST=127.0.0.1"
+    if "%OMNIVOICE_PORT%"=="" set "OMNIVOICE_PORT=8088"
+    echo [INFO] Starting FastAPI server on http://%OMNIVOICE_HOST%:%OMNIVOICE_PORT% ...
     "%~dp0venv\Scripts\python.exe" "%~dp0app\main.py"
 ) else (
     echo.

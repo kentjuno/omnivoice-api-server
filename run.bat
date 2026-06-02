@@ -2,10 +2,13 @@
 title OmniVoice API Server - Port 8088
 color 0A
 
+if "%OMNIVOICE_HOST%"=="" set "OMNIVOICE_HOST=127.0.0.1"
+if "%OMNIVOICE_PORT%"=="" set "OMNIVOICE_PORT=8088"
+
 echo.
 echo  ===================================================
 echo   OmniVoice Local API Server
-echo   http://127.0.0.1:8088
+echo   http://%OMNIVOICE_HOST%:%OMNIVOICE_PORT%
 echo  ===================================================
 echo.
 
@@ -22,9 +25,9 @@ if not exist "%~dp0venv\Scripts\activate.bat" (
 :: Activate venv
 call "%~dp0venv\Scripts\activate.bat"
 
-:: Kill anything already on port 8088
-for /f "tokens=5" %%a in ('netstat -ano ^| findstr :8088 ^| findstr LISTENING') do (
-    echo  [INFO] Port 8088 in use by PID %%a - killing it...
+:: Kill anything already on the target port
+for /f "tokens=5" %%a in ('netstat -ano ^| findstr :%OMNIVOICE_PORT% ^| findstr LISTENING') do (
+    echo  [INFO] Port %OMNIVOICE_PORT% in use by PID %%a - killing it...
     taskkill /PID %%a /F >nul 2>&1
 )
 
@@ -36,7 +39,7 @@ echo.
 echo  [INFO] Starting server... (Ctrl+C to stop)
 echo.
 cd /d "%~dp0app"
-"%~dp0venv\Scripts\python.exe" -m uvicorn main:app --host 127.0.0.1 --port 8088 --log-level info
+"%~dp0venv\Scripts\python.exe" -m uvicorn main:app --host %OMNIVOICE_HOST% --port %OMNIVOICE_PORT% --log-level info
 
 echo.
 echo  [INFO] Server stopped.
