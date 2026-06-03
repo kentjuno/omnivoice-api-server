@@ -279,6 +279,42 @@ def list_available_voices():
     files.sort()
     return {"voices": files}
 
+@app.delete("/api/voices/{voice_name}")
+def delete_voice(voice_name: str):
+    """Deletes a reference audio file from the voices directory."""
+    voices_dir = Path(__file__).resolve().parents[1] / "voices"
+    deleted = False
+    for ext in [".wav", ".mp3", ".ogg", ".flac"]:
+        p = voices_dir / f"{voice_name}{ext}"
+        if p.exists():
+            try:
+                os.remove(p)
+                deleted = True
+            except Exception as e:
+                logger.error("Failed to delete voice file: %s", e)
+                raise HTTPException(status_code=500, detail=f"Không thể xóa file: {e}")
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Không tìm thấy giọng nói cần xóa")
+    return {"status": "success", "message": f"Đã xóa giọng mẫu {voice_name} thành công"}
+
+@app.get("/api/voices/{voice_name}/audio")
+def get_voice_audio(voice_name: str):
+    """Retrieve/stream the reference audio file from the voices directory."""
+    voices_dir = Path(__file__).resolve().parents[1] / "voices"
+    for ext in [".wav", ".mp3", ".ogg", ".flac"]:
+        p = voices_dir / f"{voice_name}{ext}"
+        if p.exists():
+            from fastapi.responses import FileResponse
+            media_type = "audio/wav"
+            if ext == ".mp3":
+                media_type = "audio/mpeg"
+            elif ext == ".ogg":
+                media_type = "audio/ogg"
+            elif ext == ".flac":
+                media_type = "audio/flac"
+            return FileResponse(str(p.resolve()), media_type=media_type)
+    raise HTTPException(status_code=404, detail="Không tìm thấy file âm thanh cho giọng nói này")
+
 if __name__ == "__main__":
     import uvicorn
     host = os.getenv("OMNIVOICE_HOST") or os.getenv("HOST", "127.0.0.1")
